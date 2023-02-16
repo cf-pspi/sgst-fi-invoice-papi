@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="sgst-fi-invoice-papi-test-suite.xml" />
+	<munit:test name="sgst-fi-invoice-papi-test-suite-sgst-fi-invoice-papiFlow2Test" doc:id="ce0831bc-04b2-4f0a-bb82-3fa4543c2438" description="Test">
+		<munit:behavior >
+			<munit:set-event doc:name="Set Input" doc:id="b9b50672-d759-4e98-a571-f1650fb6455e">
+				<munit:payload value="#[output application/json  --- readUrl('classpath://invoiceCreate/invoiceBody2.dwl')]" encoding="UTF-8" mediaType="application/json " />
+				
+				
+				
+				
+				
+			</munit:set-event>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="283d1d32-8487-44bb-99bf-4167d12adc11" processor="sap:document-listener">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Document listener" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="15ed82a8-0260-442a-a5d3-e14cd83e16bc" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="5e49f0e6-3864-47d6-8fba-ca82988f6545" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call einvoice sapi" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="033822cf-ab5e-4c51-8a4b-cd8c15c67e84" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to sgst-fi-invoice-papiFlow2" doc:id="c50fbb37-61e7-49ec-ac22-fa7e22043f6d" name="sgst-fi-invoice-papiFlow2"/>
+		</munit:execution>
+	</munit:test>
+	<munit:test name="sgst-fi-invoice-papi-test-suite-sgst-fi-invoice-papiFlowTest" doc:id="2e09d17c-ce05-4aa7-9dd9-034a0db8b626" description="Test">
+		<munit:behavior >
+			<munit:set-event doc:name="Set Input" doc:id="3a2c054c-f3cb-4bf1-9b88-d32507825ba5">
+				<munit:payload value="#[output application/json  --- readUrl('classpath://invoiceCreate/invoice.dwl')]" encoding="UTF-8" mediaType="application/json " />
+			</munit:set-event>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="f46c8d6f-c71f-406e-9fa3-2600a9e53609" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Request" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="f8acc4ca-4156-45de-84d4-da5854a83766" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="7fcdc507-61ce-4b29-b565-abb534348940" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Request" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="f470dc37-f81e-4f5b-866d-7581826c6ba5" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to sgst-fi-invoice-papiFlow" doc:id="796092ac-3ee1-49a1-9f20-94bb393bea69" name="sgst-fi-invoice-papiFlow"/>
+		</munit:execution>
+	</munit:test>
+	<munit:test name="sgst-fi-invoice-papi-test-suite-sgst-fi-invoice-papiFlowTest1" doc:id="afcc9a7e-1315-40b2-83b7-3836ffaf7101" description="Test" >
+		<munit:behavior >
+			<munit:set-event doc:name="Set Input" doc:id="e0ecd7c6-4a90-4a13-9dde-7045bb12a623" >
+				<munit:payload value="#[output application/json  --- readUrl('classpath://invoiceCreate/invoice.dwl')]" encoding="UTF-8" mediaType="application/json " />
+			</munit:set-event>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="dea1a0a7-eef7-4953-a96a-29c3302ee24b" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Request" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="f8acc4ca-4156-45de-84d4-da5854a83766" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when1" doc:id="bb7f20b1-7d6e-4886-bfed-3a06946e7918" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Request" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="f470dc37-f81e-4f5b-866d-7581826c6ba5" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="ANY" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to sgst-fi-invoice-papiFlow" doc:id="ed710b36-eb48-4f54-8c25-3692c0e6db99" name="sgst-fi-invoice-papiFlow" />
+		</munit:execution>
+	</munit:test>
+
+
+
+</mule>

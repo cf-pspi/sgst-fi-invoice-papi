@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:sap="http://www.mulesoft.org/schema/mule/sap" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/sap http://www.mulesoft.org/schema/mule/sap/current/mule-sap.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<os:object-store name="Object_store" doc:name="Object store" doc:id="3f1c8ea9-2c25-474e-9d4e-7ac87415eb01" />
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="3c512ce3-0d3a-4937-8e85-653ab086aa06" basePath="${invoicesapi.basePath}">
+		<http:request-connection protocol="HTTPS" host="${invoicesapi.host}" tlsContext="TLS_Context"/>
+	</http:request-config>
+	<json-logger:config name="JSON_Logger_Config" doc:name="JSON Logger Config" doc:id="4d112895-5210-46a4-ae91-e7d478449c43" environment="${mule.env}"/>
+	<!-- <tls:context name="TLS_Context" doc:name="TLS Context" doc:id="2c41d8b3-6907-471e-87b7-3784cb0be8da" >
+		<tls:key-store type="jks" path="sitkeystore.jks" alias="servercert" keyPassword="winter@123" password="winter@123" />
+	</tls:context> -->
+	<tls:context name="TLS_Context" doc:name="TLS Context" doc:id="e19a90cd-e66e-4a04-a351-7fd60349e99e" >
+	<tls:key-store type="jks" path="sitkeystore.jks" alias="servercert" keyPassword="winter@123" password="winter@123" />
+	</tls:context>
+	<http:request-config name="HTTP_Request_configuration_einvoice_sapi" doc:name="HTTP Request configuration" doc:id="4faaf425-1edb-40ab-99d1-b9730a922239" basePath="${http.einvoice.sapi.basepath}">
+		<http:request-connection host="${http.einvoice.sapi.host}" connectionIdleTimeout="${http.einvoice.sapi.timeout}" protocol="HTTPS" tlsContext="TLS_Context"/>
+	</http:request-config>
+	<http:request-config name="HTTP_Request_configuration_einvoice" doc:name="HTTP Request configuration" doc:id="d4227054-8120-439d-8f0d-bae93437d7cc" >
+		<http:request-connection protocol="HTTPS" host="${einvoice.host}" port="${einvoice.port}" />
+	</http:request-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="4a5a249f-5c99-4220-b5a0-43d471f70831" file="properties\local.yaml" />
+	<sap:sap-config name="SAP_Config" doc:name="SAP Config" doc:id="57404a4d-b4a5-4683-9b5b-267550efc537">
+		<sap:simple-connection-provider-connection username="${sapidoc.username}" password="${sapidoc.pwd}" systemNumber="00" client="${sapidoc.client}" applicationServerHost="${sapidoc.host}"/>
+	</sap:sap-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="8687ad63-cee9-4ffd-b27b-49adfe074375" file="properties\common.yaml" />
+	<error-handler name="common-exception-handler" doc:id="2f86531b-7f78-4714-bc3c-b03fa6b2dce9" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate2" doc:id="44867aa5-df98-44f7-b9d9-bcb1a99a8dcf" type="ANY" >
+			<flow-ref doc:name="Flow Reference" doc:id="4fd5ec1e-6029-4e49-87ff-25ba23346b81" name="global-config-propagate-error" />
+		</on-error-propagate>
+	</error-handler>
+	<sub-flow name="global-config-propagate-error" doc:id="89e6d36b-1da7-4234-89fd-417a8fd88e7b" >
+		<ee:transform doc:name="Transform Message" doc:id="eced03bd-dc09-47f6-a364-d8ef3b2a5534" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<async doc:name="Async" doc:id="072e324c-b543-44d5-884f-02e5ac54e29c" >
+			<flow-ref doc:name="Flow Reference" doc:id="09c895d7-39bf-4210-86d4-f638be565be2" name="global-config-email-notification" />
+		</async>
+	</sub-flow>
+	<sub-flow name="global-config-email-notification" doc:id="19d1daee-0653-4e13-8f9f-801477ccca88" >
+		<ee:transform doc:name="Transform Message" doc:id="300fd0d6-f2c4-459f-b461-82fd98e23bfd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var seperator = "/"
+---
+{
+    "apiName": app.name default "",
+    "correlationID": vars.TransactionID default "",
+    "toAddress": Mule::p('amq.email.toaddress') default [],
+    "fileName": vars.fileDetails.flatFileName default "NA",
+   	"filePath": ("/" ++ Mule::p('api.flowDirection')  ++ "/" ++ lower(vars.fileDetails.subsidiary) ++ "/" ++ lower(vars.fileDetails.externalSystem) ++ vars.sapiHttpPath  ++ "/" ++ lower(vars.fileDetails.flatFileName) ++ "." ++ vars.fileDetails.flatFileExtension) as String default "NA",
+    "errorDetails":{
+        "errorCode":payload.errorCode default "",
+        "errorDesc":payload.errorMessage default ""
+   }}
+ ]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow> 
+	<!-- <configuration-properties doc:name="Configuration properties" doc:id="1c902888-6103-419a-ab5b-8d827ebfd3fb" file="local.yaml" /> -->
+</mule>

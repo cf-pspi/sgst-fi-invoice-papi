@@ -1,0 +1,99 @@
+#environment
+mule:
+  env: local
+  
+http:              
+  einvoice:    
+        sapi:
+            client_id: ''
+            client_secret: ''
+            host: 'sgst-invoice-einvoice-sapi-sit-5ircui.cci3mz.sgp-s1.cloudhub.io'
+            port: '8081' 
+            path: '/create-invoice'    
+            basepath: '/api/v1'
+            timeout: '30000'  
+einvoice:
+   host: "api-uat.einvoice.fpt.com.vn"
+   port: "443"
+   path: "search-invoice"
+   stax: "0101382443"
+
+backdate: "70"
+
+invoicesapi:
+      host: "sgst-fi-invoice-sap-sapi-sit-5ircui.internal-cci3mz.sgp-s1.cloudhub.io"
+      port: "8081"
+      basePath: "/api/v1/"
+      path: "/invoice-acknowledgment"
+   
+#SAP config details
+
+sapidoc:
+     host: "10.80.226.151"
+     username: "EDIUSER"
+     pwd: "Init@123456"
+     client: "304"
+     port: "44300"
+     sendname: "ZVGSDFI_IBDEINVOICE"
+     gatewayhost: "10.80.226.151"
+     gatewayprogramId: "RFC_SOATGQ304"
+     gatewayservice: "3200"
+     idoctype: "ZVGSDFI_IBDEINVOICE"
+     
+#SFTP config details
+sftp: 
+  common:
+    host: '10.86.48.62'
+    port: '22'
+    username: 'mule2Spana'
+    password: '![Ah7VGyRPyLrDqv16k0OVMjbRf2uKp3/Cv2E/9PGqmhk=]'
+    system: 'PISCAP Common Storage'
+    path:
+      papvntl1: '/inbound/papvn-tl1/output/'
+      papvntl2: '/inbound/papvn-tl2/output/'
+      pmpc: '/inbound/pmpc/output/'
+    
+      
+                   
+#encryption key   
+secret:
+  key: '![GmjenUtO6a1Q5t7umfwmSvcwAX/Hi2XUvySHc/0lJos=]'
+  
+#Notification Configuration
+amq:
+  notification:
+    email:
+      publish: 
+        url: 'https://mq-us-east-1.anypoint.mulesoft.com/api/v1'
+        client:
+          id: '3b109a1dd2a84b238e8eaa858e572009'
+          secret: 'C569f53f48e44a0aA0c7EcA5115c872f'
+        path: 'mq-common-email-utility-sit'
+        
+
+json:
+  logger:
+    application:
+      version: '1.0'
+      name: sgst-edifile-sap-sapi
+    env: dev
+    
+api: 
+  action:
+      api-start: 'API START'
+      api-end: 'API END'
+      process: 'PROCESS'
+      call-api: 'CALL API'
+      call-extsys: 'CALL EXT-SYS'
+  status:
+      init: 'INIT'
+      success: 'SUCCESS'
+      failure: 'FAILURE'
+      complete: 'COMPLETE'          
+  flowDirection: 'outbound'
+  autodiscovery.id: '18414759'
+  source: 'EAPI'
+  flowDirection-in: 'inbound'
+  name: 'sgst-edifile-sap-sapi'
+
+autodiscoveryid: '18461964'

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:sap="http://www.mulesoft.org/schema/mule/sap"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/sap http://www.mulesoft.org/schema/mule/sap/current/mule-sap.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="a3811e7f-759a-4b0c-9d2a-d4a03269d212" >
+		<http:listener-connection host="0.0.0.0" port="8082" protocol="HTTPS" tlsContext="TLS_Context"/>
+	</http:listener-config>
+	
+	<flow name="sgst-fi-invoice-papiFlow" doc:id="a7b0b9e4-b2be-49c1-886d-f7aa931605bd" >
+		<scheduler doc:name="Scheduler" doc:id="6e8edf71-80c6-4be6-bf92-f68933a0b89b" >
+			<scheduling-strategy >
+				<fixed-frequency />
+			</scheduling-strategy>
+		</scheduler>
+		<flow-ref doc:name="Flow Reference" doc:id="955b84ae-2c20-458e-8a87-ef6063be913e" name="sgst-fi-invoice-papi-implSub_Flow"/>
+		<error-handler ref="common-exception-handler" />
+	</flow>
+	<flow name="sgst-fi-invoice-papiFlow2" doc:id="21e059ed-da91-4ae7-8028-3ca6a3020353" >
+		<sap:document-listener doc:name="Document listener" doc:id="15ed82a8-0260-442a-a5d3-e14cd83e16bc" programID="${sapidoc.gatewayprogramId}" config-ref="SAP_Config" gatewayHost="${sapidoc.gatewayhost}" gatewayService="${sapidoc.gatewayservice}"/>
+		<logger level="INFO" doc:name="Logger" doc:id="c50363e3-6a93-4878-9321-0a2554e057eb" message="-------------IDOC Message Recieved --------------------------------------"/>
+		<logger level="INFO" doc:name="Logger" doc:id="0223bef3-8f65-4b4f-b616-c089360ea55a" message="#[payload]"/>
+		<flow-ref doc:name="Flow Reference" doc:id="6f5ed24b-2d71-45c6-9491-e8c86e748563" name="sgst-fi-invoice-papi-implSub_call-einvoice-sap-sapi"/>
+		<error-handler ref="common-exception-handler" />
+	</flow>
+</mule>
