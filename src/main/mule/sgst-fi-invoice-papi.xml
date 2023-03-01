@@ -1,30 +1,81 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns:sap="http://www.mulesoft.org/schema/mule/sap"
-	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp" xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:sap="http://www.mulesoft.org/schema/mule/sap" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/sap http://www.mulesoft.org/schema/mule/sap/current/mule-sap.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
-http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
-	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="a3811e7f-759a-4b0c-9d2a-d4a03269d212" >
-		<http:listener-connection host="0.0.0.0" port="8082" protocol="HTTPS" tlsContext="TLS_Context"/>
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="a3811e7f-759a-4b0c-9d2a-d4a03269d212">
+		<http:listener-connection host="0.0.0.0" port="8081" protocol="HTTPS" tlsContext="TLS_Context"/>
 	</http:listener-config>
 	
+	<sftp:config name="SFTP_Config" doc:name="SFTP Config" doc:id="8eb8ecdf-39f1-4370-9f19-c5848df352c5" >
+		<sftp:connection host="10.86.48.62" username="mule2Spana" password="3Vn13MbC4L4dxMSd" />
+	</sftp:config>
 	<flow name="sgst-fi-invoice-papiFlow" doc:id="a7b0b9e4-b2be-49c1-886d-f7aa931605bd" >
 		<scheduler doc:name="Scheduler" doc:id="6e8edf71-80c6-4be6-bf92-f68933a0b89b" >
 			<scheduling-strategy >
-				<fixed-frequency />
+				<fixed-frequency frequency="30" timeUnit="MINUTES"/>
 			</scheduling-strategy>
 		</scheduler>
+		<ee:transform doc:name="Transform Message" doc:id="6aff3f06-73ff-444d-8a31-e79b10ec4936" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="correlationID" ><![CDATA[%dw 2.0
+output application/java
+---
+uuid()]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 		<flow-ref doc:name="Flow Reference" doc:id="955b84ae-2c20-458e-8a87-ef6063be913e" name="sgst-fi-invoice-papi-implSub_Flow"/>
 		<error-handler ref="common-exception-handler" />
 	</flow>
 	<flow name="sgst-fi-invoice-papiFlow2" doc:id="21e059ed-da91-4ae7-8028-3ca6a3020353" >
 		<sap:document-listener doc:name="Document listener" doc:id="15ed82a8-0260-442a-a5d3-e14cd83e16bc" programID="${sapidoc.gatewayprogramId}" config-ref="SAP_Config" gatewayHost="${sapidoc.gatewayhost}" gatewayService="${sapidoc.gatewayservice}"/>
 		<logger level="INFO" doc:name="Logger" doc:id="c50363e3-6a93-4878-9321-0a2554e057eb" message="-------------IDOC Message Recieved --------------------------------------"/>
+		<ee:transform doc:name="Transform Message" doc:id="9394346c-cc9d-40b9-8172-4475239b4ab6">
+			<ee:message>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="correlationID" ><![CDATA[%dw 2.0
+output application/java
+---
+uuid()]]></ee:set-variable>
+				<ee:set-variable variableName="fileName" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.Y0GFI_EINVOICE.IDOC.EDI_DC40.DOCNUM]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<async doc:name="Async" doc:id="263e8f6a-58cb-4f6a-970a-7f6f9bf0b511" >
+			<sftp:write doc:name="Write" doc:id="9541af06-42e4-4515-a6a0-e5721333ba56" config-ref="SFTP_Config" path='#["/inbound/SAP/eInvoice/" ++ vars.fileName ++ "_From_SAP.xml"]' />
+		</async>
 		<logger level="INFO" doc:name="Logger" doc:id="0223bef3-8f65-4b4f-b616-c089360ea55a" message="#[payload]"/>
 		<flow-ref doc:name="Flow Reference" doc:id="6f5ed24b-2d71-45c6-9491-e8c86e748563" name="sgst-fi-invoice-papi-implSub_call-einvoice-sap-sapi"/>
 		<error-handler ref="common-exception-handler" />
+	</flow>
+	<flow name="sgst-fi-invoice-papiFlow1" doc:id="f185b5ca-8fc2-4ed4-aeea-47dffa613a9c" >
+		<http:listener doc:name="Listener" doc:id="b78bb5b5-c1d1-46d1-8e68-70a61ba1afca" config-ref="HTTP_Listener_config" path="/test"/>
+		<ee:transform doc:name="Transform Message" doc:id="1f99ec6d-203a-4ba8-af05-4cf8701a8f60" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="correlationID" ><![CDATA[%dw 2.0
+output application/java
+---
+uuid()]]></ee:set-variable>
+				<ee:set-variable variableName="fileName" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.Y0GFI_EINVOICE.IDOC.EDI_DC40.DOCNUM]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<async doc:name="Async" doc:id="b6ab96c9-853f-422e-9c17-9315c0caffdc" >
+			<sftp:write doc:name="Write" doc:id="150b4e61-7fdd-4c7b-afbc-f19e9e6e0ae6" config-ref="SFTP_Config" path='#["/inbound/SAP/eInvoice/" ++ vars.fileName ++ "_From_SAP.xml"]' />
+		</async>
+		<flow-ref doc:name="Flow Reference" doc:id="d29e32e5-e7a2-4617-88c1-fbbc36bdd5de" name="sgst-fi-invoice-papi-implSub_call-einvoice-sap-sapi" />
 	</flow>
 </mule>

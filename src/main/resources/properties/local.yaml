@@ -7,7 +7,7 @@ http:
         sapi:
             client_id: ''
             client_secret: ''
-            host: 'sgst-invoice-einvoice-sapi-sit-5ircui.cci3mz.sgp-s1.cloudhub.io'
+            host: 'sgst-invoice-einvoice-sapi-sit-5ircui.internal-cci3mz.sgp-s1.cloudhub.io'
             port: '8081' 
             createpath: '/create-invoice'
             cancelpath: '/cancel-invoice'   
@@ -69,7 +69,7 @@ amq:
         client:
           id: '3b109a1dd2a84b238e8eaa858e572009'
           secret: 'C569f53f48e44a0aA0c7EcA5115c872f'
-        path: 'mq-common-email-utility-sit'
+        path: 'mq-common-audit-aen'
         
 
 json:

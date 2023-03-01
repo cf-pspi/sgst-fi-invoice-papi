@@ -45,6 +45,7 @@
 							<artifactId>libsapjco3</artifactId>
 						</sharedLibrary>
 					</sharedLibraries>
+					<classifier>mule-application</classifier>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -152,6 +153,12 @@
 			<artifactId>assertions</artifactId>
 			<version>1.0.2</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-sftp-connector</artifactId>
+			<version>1.6.1</version>
+			<classifier>mule-plugin</classifier>
 		</dependency>
 	</dependencies>
 

@@ -95,73 +95,83 @@ vars.invoiceACK]]></ee:set-payload>
 	<sub-flow name="sgst-fi-invoice-papi-implSub_call-einvoice-sap-sapi" doc:id="101a58d9-8c5e-4633-8158-454396cde98a" >
 		<json-logger:logger doc:name="Logger" doc:id="309444bd-be3d-411a-9d4b-f528bdfebc97" config-ref="JSON_Logger_Config" message="call to invoice sapi"/>
 		<choice doc:name="Choice" doc:id="19511a5b-811c-4205-8ddb-89202fda4ca7" >
-			<when expression="#[payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.TRAN_TYPE == 1]">
+			<when expression='#[payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.TRAN_TYPE == "1"]'>
 				<json-logger:logger doc:name="Logger" doc:id="ac0bbf17-0c53-4ddb-93b5-0673e24436be" config-ref="JSON_Logger_Config" message="call to sapi for create invoice"/>
 				<ee:transform doc:name="Transform Message" doc:id="7abd915b-61fc-45df-98ae-c95880682290">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
+
 ---
 {
- "user":
- {
- "username": "0101382443.api",
- "password": "admin@12345*#"
-  },
- "lang": "en",
- "inv": {
-     "sid": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.DOCKEY,
- "idt": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.ISSUE_DATE,
- "type": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.INV_TYPE,
- "form": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.FORM,
- "serial": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.SERIAL,
- "seq": "","aun": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.AUTO_NUM,
- "bcode": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSCODE,
- "bname": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSNAME,
- "buyer": "",
- "btax": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSTAXCODE,
- "baddr": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSADDRESS,
- "btel": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSTEL,
- "bmail": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSEMAIL,
- "sendfile": 1, //no mapping found in excel?
- "paym": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.PAYMODE,
- "curr": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CURRENCY,
- "exrt": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.EXCHG_RATE,
- "bacc": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.CUSBANKACCT,
- "bbank": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.CUSBANK,
- "note": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.CUSNOTE,
- "sumv": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.SUBTOTAL_VND,
- "sum": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.SUBTOTAL,
- "vatv": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.VATAMT_VND,
- "vat": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.VATAMT,
- "word": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.TOTALINWORDS,
- "totalv": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.TOTAL_VND,
- "discount": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.DISCOUNT,
- "total": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.TOTAL,
- "type_ref": 1, //default value as '1'
- //"sendtype": 1, -> no mapping found
- "items": [
- {"type": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.TYPE,
- "vrt": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.VATRATE,
- "line": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.LINE,
- "name": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.PRODUCT,
- "unit": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.UNIT,
- "amount": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.AMOUNT,
- "price": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.PRICE,
- "quantity": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.QUANTITY,
- //"vat": 3654.0000, -> no mapping found
- //"total": 49332.0000, -> no mapping found
- "c0": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.PRODCODE default "" ++ " " ++ payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.CUSTMAT default ""
- //"c1": "49332.00",
- //"c2": "45678.00",
- //"c3": ""
-     }],
- "stax": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.TAX_NUM,
- "c0": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.DOCKEY
- }}]]></ee:set-payload>
+    "user": {
+        "username": "0101382443.api",
+        "password": "admin@12345*#"
+    },
+    "lang": "en",
+    "inv": {
+        "sid": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.DOCKEY,
+        "idt": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.ISSUE_DATE,
+        "type": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.INV_TYPE,
+        "form": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.FORM,
+        "serial": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.SERIAL,
+        "seq": "",
+        "aun": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.AUTO_NUM replace "," with "") as Number,
+        "bcode": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSCODE,
+        "bname": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSNAME,
+        "buyer": "",
+        "btax": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSTAXCODE,
+        "baddr": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSADDRESS,
+        "btel": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSTEL,
+        "bmail": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSEMAIL default "",
+        "sendfile": 1, //no mapping found in excel?
+        "paym": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.PAYMODE,
+        "curr": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CURRENCY,
+        "exrt": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.EXCHG_RATE replace "," with "") as Number,
+        "bacc": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.CUSBANKACCT,
+        "bbank": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.CUSBANK,
+        "note": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.CUSNOTE,
+        "sumv": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.SUBTOTAL_VND replace "," with "") as Number,
+        "sum": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.SUBTOTAL replace "," with "") as Number,
+        "vatv": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.VATAMT_VND replace "," with "") as Number,
+        "vat": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.VATAMT replace "," with "") as Number,
+        "word": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.TOTALINWORDS default "",
+        "totalv": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.TOTAL_VND replace "," with "") as Number,
+        "discount": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.DISCOUNT,
+        "total": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.TOTAL replace "," with "") as Number,
+        "type_ref": 1,
+        "sendtype": 1,
+        "items": [
+            {
+                "type": if(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.TYPE != null) payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.TYPE replace "." with "" else "",
+                "vrt": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.VATRATE,
+                "line": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.LINE replace "," with "") as Number,
+                "name": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.PRODUCT,
+                "unit": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.UNIT,
+                "amount": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.AMOUNT replace "," with "") as Number,
+                "price": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.PRICE replace "," with "") as Number,
+                "quantity": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.QUANTITY replace "," with "") as Number,
+                "vat": "3654.0000" as Number,
+                "total": "49332.0000" as Number,
+                "c0": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.PRODCODE default "" ++ " " ++ payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.CUSTMAT replace "," with "") as Number default "",
+                "c1": "49332.00",
+                "c2": "45678.00",
+                "c3": ""
+            }
+        ],
+        "stax": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.TAX_NUM,
+        "c0": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.DOCKEY
+    }
+}]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-				<http:request method="POST" doc:name="Call einvoice sapi" doc:id="033822cf-ab5e-4c51-8a4b-cd8c15c67e84" config-ref="HTTP_Request_configuration_einvoice_sapi" path="${http.einvoice.sapi.createpath}" />
+				<http:request method="POST" doc:name="Call einvoice sapi" doc:id="033822cf-ab5e-4c51-8a4b-cd8c15c67e84" config-ref="HTTP_Request_configuration_einvoice_sapi" path="${http.einvoice.sapi.createpath}" >
+					<http:headers ><![CDATA[#[output application/java
+---
+{
+	correlationID : vars.fileName
+}]]]></http:headers>
+				</http:request>
 				<json-logger:logger doc:name="Logger" doc:id="5e3eee83-2ce2-4b1c-a3a4-d9973c80ad05" config-ref="JSON_Logger_Config" message="call to sapi for create invoice completed"/>
 			</when>
 			<otherwise >
@@ -178,8 +188,13 @@ output application/json
 		</choice>
 	</sub-flow>
 	<sub-flow name="sgst-fi-invoice-papi-implSubflow-call-invoice-sap-sapi" doc:id="4128c934-4e10-4bec-8f64-fd96bb033a9d" >
-		<http:request method="POST" doc:name="Request" doc:id="f470dc37-f81e-4f5b-866d-7581826c6ba5" config-ref="HTTP_Request_configuration_einvoice" path="${invoicesapi.path}">
+		<http:request method="POST" doc:name="Request" doc:id="f470dc37-f81e-4f5b-866d-7581826c6ba5" config-ref="HTTP_Request_configuration" path="${invoicesapi.path}">
 			<http:body ><![CDATA[#[vars.invoiceACK]]]></http:body>
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"correlationID" : vars.correlationID
+}]]]></http:headers>
 		</http:request>
 	</sub-flow>
 </mule>

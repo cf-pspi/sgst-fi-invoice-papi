@@ -25,7 +25,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 		<http:request-connection host="${http.einvoice.sapi.host}" connectionIdleTimeout="${http.einvoice.sapi.timeout}" protocol="HTTPS" tlsContext="TLS_Context"/>
 	</http:request-config>
 	<http:request-config name="HTTP_Request_configuration_einvoice" doc:name="HTTP Request configuration" doc:id="d4227054-8120-439d-8f0d-bae93437d7cc" >
-		<http:request-connection protocol="HTTPS" host="${einvoice.host}" port="${einvoice.port}" />
+		<http:request-connection protocol="HTTPS" host="${einvoice.host}"/>
 	</http:request-config>
 	<configuration-properties doc:name="Configuration properties" doc:id="4a5a249f-5c99-4220-b5a0-43d471f70831" file="properties\local.yaml" />
 	<sap:sap-config name="SAP_Config" doc:name="SAP Config" doc:id="57404a4d-b4a5-4683-9b5b-267550efc537">

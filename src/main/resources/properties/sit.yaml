@@ -8,7 +8,7 @@ http:
         sapi:
             client_id: ''
             client_secret: ''
-            host: 'sgst-invoice-einvoice-sapi-sit-5ircui.cci3mz.sgp-s1.cloudhub.io'
+            host: 'sgst-invoice-einvoice-sapi-sit-5ircui.internal-cci3mz.sgp-s1.cloudhub.io'
             port: '8081' 
             createpath: '/create-invoice'
             cancelpath: '/cancel-invoice'   
