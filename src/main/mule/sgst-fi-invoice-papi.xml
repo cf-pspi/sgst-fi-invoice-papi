@@ -15,7 +15,7 @@ http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sft
 	<sftp:config name="SFTP_Config" doc:name="SFTP Config" doc:id="8eb8ecdf-39f1-4370-9f19-c5848df352c5" >
 		<sftp:connection host="10.86.48.62" username="mule2Spana" password="3Vn13MbC4L4dxMSd" />
 	</sftp:config>
-	<flow name="sgst-fi-invoice-papiFlow" doc:id="a7b0b9e4-b2be-49c1-886d-f7aa931605bd" >
+	<flow name="sgst-fi-invoice-papiFlow-vA" doc:id="a7b0b9e4-b2be-49c1-886d-f7aa931605bd" >
 		<scheduler doc:name="Scheduler" doc:id="6e8edf71-80c6-4be6-bf92-f68933a0b89b" >
 			<scheduling-strategy >
 				<fixed-frequency frequency="30" timeUnit="MINUTES"/>
@@ -31,7 +31,7 @@ output application/java
 uuid()]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="Flow Reference" doc:id="955b84ae-2c20-458e-8a87-ef6063be913e" name="sgst-fi-invoice-papi-implSub_Flow"/>
+		<flow-ref doc:name="Flow Reference" doc:id="955b84ae-2c20-458e-8a87-ef6063be913e" name="sgst-fi-invoice-papi-implSub_Flow" />
 		<error-handler ref="common-exception-handler" />
 	</flow>
 	<flow name="sgst-fi-invoice-papiFlow2" doc:id="21e059ed-da91-4ae7-8028-3ca6a3020353" >
@@ -77,5 +77,22 @@ payload.Y0GFI_EINVOICE.IDOC.EDI_DC40.DOCNUM]]></ee:set-variable>
 			<sftp:write doc:name="Write" doc:id="150b4e61-7fdd-4c7b-afbc-f19e9e6e0ae6" config-ref="SFTP_Config" path='#["/inbound/SAP/eInvoice/" ++ vars.fileName ++ "_From_SAP.xml"]' />
 		</async>
 		<flow-ref doc:name="Flow Reference" doc:id="d29e32e5-e7a2-4617-88c1-fbbc36bdd5de" name="sgst-fi-invoice-papi-implSub_call-einvoice-sap-sapi" />
+	</flow>
+	<flow name="sgst-fi-invoice-papiFlow-vB" doc:id="08975ec6-1518-4d67-bbc8-8aaa1c71fd7e" >
+		<scheduler doc:name="Scheduler" doc:id="1263d8da-d426-49ef-95fd-f8eea83b2ace" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="30" timeUnit="MINUTES" />
+			</scheduling-strategy>
+		</scheduler>
+		<ee:transform doc:name="Transform Message" doc:id="d462560f-fb24-4bea-a014-7caa7ec023c7" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="correlationID" ><![CDATA[%dw 2.0
+output application/java
+---
+uuid()]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="cf1998bc-773f-47b2-8e32-ef0f086407ff" name="sgst-fi-invoice-papi-implSub_Flow-vB" />
 	</flow>
 </mule>

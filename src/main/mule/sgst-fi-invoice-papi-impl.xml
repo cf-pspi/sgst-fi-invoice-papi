@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
-	xmlns:os="http://www.mulesoft.org/schema/mule/os"
-	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp" xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
 http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
-http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd">
 	
 	<sub-flow name="sgst-fi-invoice-papi-implSub_Flow" doc:id="369dd4f6-794c-43d7-b81e-4fef082eb75c" >
 		<json-logger:logger doc:name="Logger" doc:id="0b6e096e-529f-4ae0-a97d-c7c54038bb6c" config-ref="JSON_Logger_Config" message="API Requet recieved"/>
@@ -30,12 +31,15 @@ now() as String {format: "y-MM-dd"} -|P70D|]]></ee:set-variable>
 			<http:query-params ><![CDATA[#[output application/java
 ---
 {
-	"stax" : p('einvoice.stax'),
+	"stax" : Mule::p('einvoice.stax'),
 	"fd": vars.backdate
 }]]]></http:query-params>
 		</http:request>
+		<async doc:name="Async" doc:id="8d2dd889-64ec-476b-873c-59d51ef63b4a">
+			<sftp:write doc:name="Write" doc:id="78105cab-e20d-48f7-8149-2c6a023fb96f" config-ref="SFTP_Config" path='#["/inbound/SAP/eInvoice/ack/" ++  vars.correlationID ++"_From_search-einvoice.json"]' />
+		</async>
 		<logger level="INFO" doc:name="Logger" doc:id="3d30391a-dee1-4c9b-8ce0-ead3537f41d6" message="#[payload]"/>
-		<os:retrieve doc:name="Retrieve" doc:id="d6d64aee-31ae-4dd6-83ae-c449fcff0922" key="lastUpdatedId" objectStore="Object_store" target="objectStoreResponse">
+		<os:retrieve doc:name="Retrieve" doc:id="d6d64aee-31ae-4dd6-83ae-c449fcff0922" key="lastUpdatedIdVA" objectStore="Object_store" target="objectStoreResponse">
 			<os:default-value ><![CDATA[0000]]></os:default-value>
 		</os:retrieve>
 		<ee:transform doc:name="filterEmptyRecords" doc:id="11294832-4aba-4871-8155-bba69f6b10b9" >
@@ -72,15 +76,15 @@ output application/json
 payload map (eachAck,index) ->
 {
 	
-    COMPCODE:"VA",
-	DOCKEY:eachAck.doc.sid,
+    COMPCODE: "VN12" ,
+	DOCKEY:eachAck.doc.sid as String,
     REFERENCE:eachAck.doc.serial ++" "++ eachAck.doc.seq
 }]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="Flow Reference" doc:id="ad9a0fec-b115-40a6-947c-048e3e998551" name="sgst-fi-invoice-papi-implSubflow-call-invoice-sap-sapi"/>
 		<json-logger:logger doc:name="Logger" doc:id="cda50dca-9699-4951-ac0e-56702aed308a" config-ref="JSON_Logger_Config" message="Successfully posted to invoice sapi"/>
-		<os:store doc:name="Store" doc:id="b2f4fea0-82db-40a0-aaa2-f82fe9e2331f" key="lastUpdatedId" objectStore="Object_store">
+		<os:store doc:name="Store" doc:id="b2f4fea0-82db-40a0-aaa2-f82fe9e2331f" key="lastUpdatedIdVA" objectStore="Object_store">
 			<os:value ><![CDATA[#[vars.invoiceACK[-1].DOCKEY]]]></os:value>
 		</os:store>
 		<ee:transform doc:name="Transform Message" doc:id="858fe210-cdd0-4488-b570-0b114940d0c6" >
@@ -100,36 +104,39 @@ vars.invoiceACK]]></ee:set-payload>
 				<ee:transform doc:name="Transform Message" doc:id="7abd915b-61fc-45df-98ae-c95880682290">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
+import * from dw::util::Coercions
 output application/json
-
 ---
 {
-    "user": {
-        "username": "0101382443.api",
-        "password": "admin@12345*#"
+    "user": if(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.COMPCODE == 'VN11'){
+        "username": Mule::p('compcode.vn11.username'),
+        "password": Mule::p('compcode.vn11.password')
+    }else {
+        "username": Mule::p('compcode.vn12.username'),
+        "password": Mule::p('compcode.vn12.password')
     },
     "lang": "en",
     "inv": {
-        "sid": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.DOCKEY,
+        "sid": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.DOCKEY replace "." with ""),
         "idt": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.ISSUE_DATE,
-        "type": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.INV_TYPE,
-        "form": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.FORM,
-        "serial": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.SERIAL,
+        "type": if(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.INV_TYPE == ".")"" else payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.INV_TYPE ,
+        "form": if(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.FORM ==".")"" else payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.FORM,
+        "serial": if(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.SERIAL ==".")"" else payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.SERIAL,
         "seq": "",
         "aun": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.AUTO_NUM replace "," with "") as Number,
-        "bcode": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSCODE,
-        "bname": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSNAME,
+        "bcode": if(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSCODE ==".")"" else payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSCODE,
+        "bname": if(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSNAME ==".")"" else payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSNAME,
         "buyer": "",
-        "btax": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSTAXCODE,
-        "baddr": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSADDRESS,
-        "btel": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSTEL,
-        "bmail": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSEMAIL default "",
-        "sendfile": 1, //no mapping found in excel?
-        "paym": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.PAYMODE,
-        "curr": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CURRENCY,
-        "exrt": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.EXCHG_RATE replace "," with "") as Number,
-        "bacc": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.CUSBANKACCT,
-        "bbank": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.CUSBANK,
+        "btax": if(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSTAXCODE ==".")"" else payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSTAXCODE,
+        "baddr": if(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSADDRESS ==".")"" else payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSADDRESS,
+        "btel": if(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSTEL !=null)payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSTEL replace "." with "" else "" ,
+        "bmail": if(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSEMAIL == ".")"" else payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CUSEMAIL,
+        "sendfile": "",
+        "paym": if(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.PAYMODE ==".")"" else payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.PAYMODE,
+        "curr": if(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CURRENCY !=null)payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.CURRENCY replace "." with "" else "",
+        "exrt": trim(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.EXCHG_RATE replace "," with "") as Number,
+        "bacc": if(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.CUSBANKACCT ==".")"" else payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.CUSBANKACCT,
+        "bbank": if(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.CUSBANK ==".")"" else payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.CUSBANK,
         "note": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.CUSNOTE,
         "sumv": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.SUBTOTAL_VND replace "," with "") as Number,
         "sum": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.SUBTOTAL replace "," with "") as Number,
@@ -143,24 +150,24 @@ output application/json
         "sendtype": 1,
         "items": [
             {
-                "type": if(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.TYPE != null) payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.TYPE replace "." with "" else "",
-                "vrt": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.VATRATE,
-                "line": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.LINE replace "," with "") as Number,
+                "type": if(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.TYPE == "." or payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.TYPE == null)"" else payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.TYPE,
+                "vrt": toNumber(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.VATRATE replace /[.,]/ with ''),
+                "line": toNumber(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.LINE replace /[.,]/ with '') ,
                 "name": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.PRODUCT,
-                "unit": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.UNIT,
-                "amount": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.AMOUNT replace "," with "") as Number,
-                "price": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.PRICE replace "," with "") as Number,
-                "quantity": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.QUANTITY replace "," with "") as Number,
+                "unit": if(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.UNIT ==".")""else payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.UNIT,
+                "amount": toNumber(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.AMOUNT replace /[.,]/ with ''),
+                "price": toNumber(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.PRICE replace /[.,]/ with ''),
+                "quantity": toNumber(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.QUANTITY replace /[.,]/ with ''),
                 "vat": "3654.0000" as Number,
                 "total": "49332.0000" as Number,
-                "c0": (payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.PRODCODE default "" ++ " " ++ payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.CUSTMAT replace "," with "") as Number default "",
+                "c0": if(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.CUSTMAT == ".") payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.PRODCODE default "" ++ "" ++ payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.CUSTMAT replace "." with "" else payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.PRODCODE default "" ++"-"++ payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_ITEM.CUSTMAT,
                 "c1": "49332.00",
                 "c2": "45678.00",
                 "c3": ""
             }
         ],
-        "stax": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADERTOTAL.TAX_NUM,
-        "c0": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.DOCKEY
+        "stax": if(payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.COMPCODE == 'VN11')Mule::p('einvoice.staxvb') else Mule::p('einvoice.stax'),
+        "c0": payload.Y0GFI_EINVOICE.IDOC.Y0GFI_EINVOICE_HEADER.DOCKEY 
     }
 }]]></ee:set-payload>
 			</ee:message>
@@ -188,6 +195,11 @@ output application/json
 		</choice>
 	</sub-flow>
 	<sub-flow name="sgst-fi-invoice-papi-implSubflow-call-invoice-sap-sapi" doc:id="4128c934-4e10-4bec-8f64-fd96bb033a9d" >
+		<async doc:name="Async" doc:id="b1f45b15-1ab6-4041-a6aa-7ca8710f213c" >
+			<sftp:write doc:name="Write" doc:id="8fa0484e-1e1d-4832-9788-0fe68803edd8" config-ref="SFTP_Config" path='#["/inbound/SAP/eInvoice/test/" ++  vars.correlationID ++"_From_search-einvoice.json"]' >
+				<sftp:content ><![CDATA[#[vars.invoiceACK]]]></sftp:content>
+			</sftp:write>
+		</async>
 		<http:request method="POST" doc:name="Request" doc:id="f470dc37-f81e-4f5b-866d-7581826c6ba5" config-ref="HTTP_Request_configuration" path="${invoicesapi.path}">
 			<http:body ><![CDATA[#[vars.invoiceACK]]]></http:body>
 			<http:headers ><![CDATA[#[output application/java
@@ -196,5 +208,89 @@ output application/json
 	"correlationID" : vars.correlationID
 }]]]></http:headers>
 		</http:request>
+	</sub-flow>
+	<sub-flow name="sgst-fi-invoice-papi-implSub_Flow-vB" doc:id="a13c25df-c3ad-418e-98bd-3a5f644349a0" >
+		<json-logger:logger doc:name="Logger" doc:id="a1b157fb-0515-447a-885d-a2a50bc8ebf2" config-ref="JSON_Logger_Config" message="API Requet recieved" />
+		<ee:transform doc:name="Transform Message" doc:id="2aa016a6-be7f-43ea-aa19-1a76ff839dbf" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="backdate" ><![CDATA[%dw 2.0
+output application/json
+---
+now() as String {format: "y-MM-dd"} -|P70D|]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<http:request method="GET" doc:name="Request" doc:id="f1ee441c-df5d-445d-8e6d-3ddf625d31a9" config-ref="HTTP_Request_configuration_einvoice" path="${einvoice.path}" >
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Basic MDEwMTM4MjQ0My5hcGk6YWRtaW5AMTIzNDUqIw=="
+}]]]></http:headers>
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"stax" : Mule::p('einvoice.staxvb'),
+	"fd": vars.backdate
+}]]]></http:query-params>
+		</http:request>
+		<async doc:name="Async" doc:id="02a88c33-1d1b-4c7a-afbf-f04222380814" >
+			<sftp:write doc:name="Write" doc:id="80768001-8d3e-4a09-83bf-e825355c672d" config-ref="SFTP_Config" path='#["/inbound/SAP/eInvoice/ack/" ++  vars.correlationID ++"_From_search-einvoice.json"]' />
+		</async>
+		<logger level="INFO" doc:name="Logger" doc:id="33cb3da9-0b59-428b-b248-abf74a13c0b5" message="#[payload]" />
+		<os:retrieve doc:name="Retrieve" doc:id="4f49bf7f-0d1a-45fb-bde6-c26212241bd4" key="lastUpdatedIdVB" objectStore="Object_store" target="objectStoreResponse" >
+			<os:default-value ><![CDATA[0000]]></os:default-value>
+		</os:retrieve>
+		<ee:transform doc:name="filterEmptyRecords" doc:id="1632764f-f7b5-4bfd-bc0d-660ec1023bed" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload filter $.doc.c0 !=""]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="removeDuplicateRecords" doc:id="afa2c32c-4fda-4ac3-abd8-8eb36ed38200" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var x=indexOf(payload.doc.sid,vars.objectStoreResponse)
+---
+if (vars.objectStoreResponse !="0000" )
+
+payload filter(item,index) -> index >x
+
+else 
+payload
+
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="constructSapInput" doc:id="f6d93868-e253-4819-b1c4-3202cdb5b2ac" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="invoiceACK" ><![CDATA[%dw 2.0
+output application/json
+---
+payload map (eachAck,index) ->
+{
+	
+    COMPCODE: "VN11",
+	DOCKEY:eachAck.doc.sid as String,
+    REFERENCE:eachAck.doc.serial ++" "++ eachAck.doc.seq
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="a71d29ce-2c80-4743-9731-14677b035100" name="sgst-fi-invoice-papi-implSubflow-call-invoice-sap-sapi" />
+		<json-logger:logger doc:name="Logger2" doc:id="c61e5ad5-b3a4-4150-8c89-d8a24f68bc47" config-ref="JSON_Logger_Config" message="Successfully posted to invoice sapi" />
+		<os:store doc:name="Store" doc:id="ed869646-d599-49a8-924b-e7b40afe3447" key="lastUpdatedIdVB" objectStore="Object_store" >
+			<os:value ><![CDATA[#[vars.invoiceACK[-1].DOCKEY]]]></os:value>
+		</os:store>
+		<ee:transform doc:name="Transform Message1" doc:id="975de29c-02e8-4dce-9f0f-cf8b2368504d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars.invoiceACK]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
 	</sub-flow>
 </mule>

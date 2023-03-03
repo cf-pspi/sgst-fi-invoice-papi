@@ -33,6 +33,14 @@ sftp:
       papvntl2: '/inbound/papvn-tl2/output/'
       pmpc: '/inbound/pmpc/output/'
     
+    
+compcode:
+  vn11:
+    username: '0101382443.api'
+    password: 'admin@12345*#'
+  vn12:
+    username: '0101382443-001.api'
+    password: 'admin@12345*# '
       
                    
 #encryption key   

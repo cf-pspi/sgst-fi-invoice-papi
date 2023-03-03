@@ -1,8 +1,7 @@
 #environment
 mule:
-  env: sit
-
-#SAP config details
+  env: uat
+  
 http:              
   einvoice:    
         sapi:
@@ -13,13 +12,36 @@ http:
             createpath: '/create-invoice'
             cancelpath: '/cancel-invoice'   
             basepath: '/api/v1'
-            timeout: '30000'   
+            timeout: '30000'  
+einvoice:
+   host: "api-uat.einvoice.fpt.com.vn"
+   port: "443"
+   path: "search-invoice"
+   stax:  '0101382443'
+   staxvb: '0101382443-001'
 
-saprest:
-     host: "vhpmkthdci.hec.privatecloudedition.com"
+backdate: "70"
+
+invoicesapi:
+      host: "sgst-fi-invoice-sap-sapi-sit-5ircui.internal-cci3mz.sgp-s1.cloudhub.io"
+      port: "8081"
+      basePath: "/api/v1/"
+      path: "/invoice-acknowledgment"
+   
+#SAP config details
+
+sapidoc:
+     host: "10.80.226.151"
+     username: "EDIUSER"
+     pwd: "Init@123456"
+     client: "304"
      port: "44300"
-     path: "/sap/opu/odata/sap/Y0GHBC_SAPINTERFACE_API_SRV/InBoundSet"
-
+     sendname: "ZVGSDFI_IBDEINVOICE"
+     gatewayhost: "10.80.226.151"
+     gatewayprogramId: "RFC_SOATGQ304"
+     gatewayservice: "3200"
+     idoctype: "ZVGSDFI_IBDEINVOICE"
+     
 #SFTP config details
 sftp: 
   common:
@@ -48,7 +70,15 @@ amq:
         client:
           id: '3b109a1dd2a84b238e8eaa858e572009'
           secret: 'C569f53f48e44a0aA0c7EcA5115c872f'
-        path: 'mq-common-email-utility-sit'
+        path: 'mq-common-audit-aen'
+        
+compcode:
+  vn11:
+    username: '0101382443.api'
+    password: 'admin@12345*#'
+  vn12:
+    username: '0101382443-001.api'
+    password: 'admin@12345*#'
         
 
 json:
@@ -56,4 +86,24 @@ json:
     application:
       version: '1.0'
       name: sgst-edifile-sap-sapi
-    env: sit
+    env: dev
+    
+api: 
+  action:
+      api-start: 'API START'
+      api-end: 'API END'
+      process: 'PROCESS'
+      call-api: 'CALL API'
+      call-extsys: 'CALL EXT-SYS'
+  status:
+      init: 'INIT'
+      success: 'SUCCESS'
+      failure: 'FAILURE'
+      complete: 'COMPLETE'          
+  flowDirection: 'outbound'
+  autodiscovery.id: '18414759'
+  source: 'EAPI'
+  flowDirection-in: 'inbound'
+  name: 'sgst-edifile-sap-sapi'
+
+autodiscoveryid: '18461964'
